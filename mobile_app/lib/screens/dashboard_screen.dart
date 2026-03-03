@@ -1188,23 +1188,14 @@ class _ConnectionCard extends StatelessWidget {
                     color: isLoading ? AppColors.inactive : AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onPrimary,
-                          ),
-                        )
-                      : Text(
-                          buttonMode == CardButtonMode.accept ? 'Accept' : 'Connect',
-                          style: GoogleFonts.sora(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onPrimary,
-                          ),
-                        ),
+                  child: Text(
+                    buttonMode == CardButtonMode.accept ? 'Accept' : 'Connect',
+                    style: GoogleFonts.sora(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isLoading ? AppColors.textTertiary : AppColors.onPrimary,
+                    ),
+                  ),
                 ),
               ),
             ] else if (buttonMode == CardButtonMode.pending) ...[
