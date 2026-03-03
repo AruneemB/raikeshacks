@@ -102,6 +102,41 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    // Mock chat for demo Gemini connection (Riley Kim)
+    if ((data == null || (data['messages'] as List?)?.isEmpty == true) &&
+        widget.roomId.contains('demo_gemini_peer')) {
+      if (_messages.isEmpty && mounted) {
+        final now = DateTime.now();
+        setState(() {
+          _messages.addAll([
+            ChatMessage(
+              text: 'Hey! Really cool that we matched — I\'ve been looking for someone with your design skills.',
+              isMe: false,
+              timestamp: now.subtract(const Duration(minutes: 12)),
+            ),
+            ChatMessage(
+              text: 'Likewise! Your AI experience is exactly what my project needs. What are you working on?',
+              isMe: true,
+              timestamp: now.subtract(const Duration(minutes: 10)),
+            ),
+            ChatMessage(
+              text: 'Building a campus networking tool that uses ML to suggest collaborators. Kind of meta that it connected us, haha.',
+              isMe: false,
+              timestamp: now.subtract(const Duration(minutes: 8)),
+            ),
+            ChatMessage(
+              text: 'Ha, love that. I\'d be down to help with the mobile UI — want to meet at Coupa Cafe tomorrow?',
+              isMe: true,
+              timestamp: now.subtract(const Duration(minutes: 5)),
+            ),
+          ]);
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+      return;
+    }
+
     if (data == null || !mounted) return;
 
     final messageList = data['messages'] as List? ?? [];

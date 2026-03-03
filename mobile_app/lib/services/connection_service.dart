@@ -9,6 +9,9 @@ import 'nearby_service.dart';
 
 /// Central service managing all connection state.
 class ConnectionService extends ChangeNotifier {
+  static const _demoConnectionId = 'demo_gemini_connection';
+  static const _demoPeerUid = 'demo_gemini_peer';
+
   /// All connections keyed by connection_id.
   final Map<String, ConnectionModel> connections = {};
 
@@ -47,108 +50,77 @@ class ConnectionService extends ChangeNotifier {
     );
   }
 
-  /// Populate mock connections for demo purposes.
+  /// Demo mode: start with clean slate.
   void _loadDemoData() {
+    notifyListeners();
+  }
+
+  /// Inject a demo connection into Discover (neither user accepted).
+  /// Returns the connection ID.
+  String injectDemoConnection() {
     final me = myUid!;
-    const peerA = 'demo_peer_pending';
-    const peerB = 'demo_peer_requested';
-    const peerC = 'demo_peer_discover';
-
-    // 1) Incoming request (other accepted, I haven't) — "Pending" from their side
-    final connA = ConnectionModel(
-      connectionId: '${me}_$peerA',
+    connections[_demoConnectionId] = ConnectionModel(
+      connectionId: _demoConnectionId,
       uid1: me,
-      uid2: peerA,
-      uid1Accepted: false,
-      uid2Accepted: true,
-      matchPercentage: 85.0,
-      uid1Summary: 'They have strong backend and systems design skills that complement your frontend expertise.',
-      uid2Summary: 'You bring creative UI/UX skills that pair well with their engineering background.',
-      notificationMessage: 'A great complementary match!',
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    // 2) Sent request (I accepted, other hasn't) — "Pending" from my side
-    final connB = ConnectionModel(
-      connectionId: '${me}_$peerB',
-      uid1: me,
-      uid2: peerB,
-      uid1Accepted: true,
-      uid2Accepted: false,
-      matchPercentage: 72.0,
-      uid1Summary: 'They are experienced in ML and data pipelines — exactly what you need.',
-      uid2Summary: 'You bring product vision and design thinking to their technical skillset.',
-      notificationMessage: 'Strong skills alignment detected!',
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    // 3) New discovery (neither accepted)
-    final connC = ConnectionModel(
-      connectionId: '${me}_$peerC',
-      uid1: me,
-      uid2: peerC,
+      uid2: _demoPeerUid,
       uid1Accepted: false,
       uid2Accepted: false,
-      matchPercentage: 91.0,
-      uid1Summary: 'They are building in the same space and have complementary technical skills.',
-      uid2Summary: 'You have the design and growth skills their project needs.',
-      notificationMessage: 'Exceptional match nearby!',
+      matchPercentage: 88.0,
+      uid1Summary:
+          'They bring deep full-stack and AI experience that would accelerate your project\'s backend. Their work in React Native and machine learning is a strong complement to your design-focused skill set, and they\'re actively looking for a collaborator on a campus networking tool.',
+      uid2Summary:
+          'You have the product design and growth skills their technical team is missing. Your UI/UX expertise and experience with user research would help them ship a polished MVP, and your growth marketing background could drive early adoption.',
+      notificationMessage: 'High-potential collaborator nearby!',
       createdAt: DateTime.now().toIso8601String(),
     );
 
-    connections[connA.connectionId] = connA;
-    connections[connB.connectionId] = connB;
-    connections[connC.connectionId] = connC;
-
-    // Mock peer profiles (anonymous until accepted)
-    peerProfiles[peerA] = {
+    peerProfiles[_demoPeerUid] = {
       'identity': {
-        'full_name': 'Jordan Rivera',
-        'university': 'MIT',
+        'full_name': 'Riley Kim',
+        'university': 'Stanford',
         'graduation_year': 2026,
         'major': ['Computer Science'],
-        'minor': ['Mathematics'],
+        'minor': ['Entrepreneurship'],
       },
       'focus_areas': ['startup', 'research'],
-      'project': {'one_liner': 'Building an AI-powered tutoring platform', 'stage': 'mvp', 'industry': ['EdTech', 'AI']},
+      'project': {
+        'one_liner': 'AI-powered campus networking platform',
+        'stage': 'mvp',
+        'industry': ['Social', 'AI'],
+      },
       'skills': {
-        'possessed': [{'name': 'Python', 'source': 'resume'}, {'name': 'Systems Design', 'source': 'resume'}, {'name': 'Cloud Infrastructure', 'source': 'portfolio'}],
-        'needed': [{'name': 'UI/UX Design', 'priority': 'must_have'}, {'name': 'React Native', 'priority': 'nice_to_have'}],
+        'possessed': [
+          {'name': 'Python', 'source': 'resume'},
+          {'name': 'React Native', 'source': 'portfolio'},
+          {'name': 'Machine Learning', 'source': 'resume'},
+        ],
+        'needed': [
+          {'name': 'UI/UX Design', 'priority': 'must_have'},
+          {'name': 'Growth Marketing', 'priority': 'nice_to_have'},
+        ],
       },
     };
 
-    peerProfiles[peerB] = {
-      'identity': {
-        'full_name': 'Alex Chen',
-        'university': 'Stanford',
-        'graduation_year': 2025,
-        'major': ['Data Science'],
-        'minor': [],
-      },
-      'focus_areas': ['side_project', 'open_source'],
-      'project': {'one_liner': 'Open-source ML pipeline toolkit', 'stage': 'launched', 'industry': ['Developer Tools']},
-      'skills': {
-        'possessed': [{'name': 'Machine Learning', 'source': 'resume'}, {'name': 'Data Engineering', 'source': 'resume'}],
-        'needed': [{'name': 'Product Management', 'priority': 'must_have'}],
-      },
-    };
+    notifyListeners();
+    return _demoConnectionId;
+  }
 
-    peerProfiles[peerC] = {
-      'identity': {
-        'full_name': 'Sam Patel',
-        'university': 'UC Berkeley',
-        'graduation_year': 2026,
-        'major': ['EECS', 'Business'],
-        'minor': ['Design'],
-      },
-      'focus_areas': ['startup', 'looking'],
-      'project': {'one_liner': 'Marketplace for student freelancers', 'stage': 'idea', 'industry': ['Marketplace', 'Future of Work']},
-      'skills': {
-        'possessed': [{'name': 'Full-Stack Development', 'source': 'portfolio'}, {'name': 'Growth Marketing', 'source': 'questionnaire'}],
-        'needed': [{'name': 'Mobile Development', 'priority': 'must_have'}, {'name': 'Backend Architecture', 'priority': 'must_have'}],
-      },
-    };
-
+  /// Move demo connection from Discover → Requests (peer accepts).
+  void promoteDemoToRequest(String connectionId) {
+    final conn = connections[connectionId];
+    if (conn == null) return;
+    connections[connectionId] = ConnectionModel(
+      connectionId: conn.connectionId,
+      uid1: conn.uid1,
+      uid2: conn.uid2,
+      uid1Accepted: conn.uid1Accepted,
+      uid2Accepted: true, // peer accepts
+      matchPercentage: conn.matchPercentage,
+      uid1Summary: conn.uid1Summary,
+      uid2Summary: conn.uid2Summary,
+      notificationMessage: conn.notificationMessage,
+      createdAt: conn.createdAt,
+    );
     notifyListeners();
   }
 
@@ -228,6 +200,10 @@ class ConnectionService extends ChangeNotifier {
         updatedAt: DateTime.now().toIso8601String(),
       );
       connections[connectionId] = updated;
+      // Add demo peer to nearbyUids so it shows in Connected section
+      if (updated.isComplete) {
+        nearbyUids.add(updated.otherUid(myUid!));
+      }
       notifyListeners();
       return;
     }

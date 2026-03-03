@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/connection_model.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import '../services/backend_service.dart';
 import '../services/connection_service.dart';
 import '../services/background_service.dart';
@@ -257,26 +260,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _sendMockNotification() async {
     setState(() => _isSendingNotification = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final uid = prefs.getString('student_uid');
+      // 1. Inject demo connection card into Discover
+      final connectionId = _connSvc.injectDemoConnection();
 
-      if (uid == null || uid.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No account found')),
-          );
-        }
-        return;
-      }
+      // 2. Show a local notification mimicking a Gemini match alert
+      const androidDetails = AndroidNotificationDetails(
+        'nearby_alerts',
+        'Nearby Alerts',
+        channelDescription: 'Notifications when someone is nearby',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const notifDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: const DarwinNotificationDetails(),
+      );
+      await FlutterLocalNotificationsPlugin().show(
+        42,
+        '\u{2728} Gemini found a match!',
+        'An 88% skills match is nearby — someone with full-stack and AI experience that complements your profile.',
+        notifDetails,
+      );
 
-      final success = await BackendService.sendMockGeminiNotification(uid);
+      // 3. Switch to dashboard tab
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? 'Notification sent!' : 'Failed to send'),
-          ),
-        );
+        setState(() => _selectedTab = 0);
       }
+
+      // 4. After 5 seconds, promote to Request (peer accepts)
+      Timer(const Duration(seconds: 5), () {
+        if (mounted) {
+          _connSvc.promoteDemoToRequest(connectionId);
+        }
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1095,17 +1111,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.onPrimary,
             ),
-            icon: _isSendingNotification
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.onPrimary,
-                    ),
-                  )
-                : const Icon(Icons.notifications_active_rounded, size: 20),
-            label: const Text('Send Mock Gemini Notification'),
+            icon: const Icon(Icons.play_arrow_rounded, size: 20),
+            label: const Text('Start Demo'),
           ),
         ),
         const SizedBox(height: 8),
@@ -1114,7 +1121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             horizontal: AppSpacing.screenPadding,
           ),
           child: Text(
-            'Sends a hard-coded FCM notification that mimics a Gemini-generated match alert.',
+            'Simulates a Gemini match notification and walks through the full connection lifecycle.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
@@ -1287,23 +1294,14 @@ class _ConnectionCard extends StatelessWidget {
                     color: isLoading ? AppColors.inactive : AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onPrimary,
-                          ),
-                        )
-                      : Text(
-                          buttonMode == CardButtonMode.accept ? 'Accept' : 'Connect',
-                          style: GoogleFonts.sora(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onPrimary,
-                          ),
-                        ),
+                  child: Text(
+                    buttonMode == CardButtonMode.accept ? 'Accept' : 'Connect',
+                    style: GoogleFonts.sora(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isLoading ? AppColors.textTertiary : AppColors.onPrimary,
+                    ),
+                  ),
                 ),
               ),
             ] else if (buttonMode == CardButtonMode.pending) ...[
